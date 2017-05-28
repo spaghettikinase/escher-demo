@@ -44,7 +44,7 @@ function initialize_knockout () {
     load_builder(function(builder) {
         load_model(function(model) {
             var old_model = escher.utils.clone(model);
-            optimize_loop(builder, model);
+            optimize_loop(builder, model, old_model);
             d3.select('#reset-button').on('click', function () {
                     model = escher.utils.clone(old_model)
                     optimize_loop(builder, model)
@@ -84,7 +84,7 @@ function set_knockout_status (text) {
 }
 
 
-function optimize_loop (builder, model) {
+function optimize_loop (builder, model, old_model) {
     builder.options.tooltip_component = function (args) {
       // Check if there is already text in the tooltip
       if (args.el.childNodes.length === 0) {
@@ -131,8 +131,6 @@ function optimize_loop (builder, model) {
               var upper = model.reactions[i].upper_bound
           }
       }
-      console.log(lower)
-      console.log(upper)
       slider_data.update({
         hide_min_max: true,
         keyboard: true,
@@ -153,18 +151,16 @@ function optimize_loop (builder, model) {
         onFinish: function (data) {
           model = change_flux_reaction (model, args.state.biggId, data.from_value, data.to_value)
           solve_and_display(model, builder, knockouts)
-          console.log(data.from)
-          console.log(data.to)
         },
       })
-      $knockout_button.onclick = function() {
+      $knockout_button.on('click', function() {
         if (knockable(args.el.bigg_id)) {
           if (!(args.el.bigg_id in knockouts))
             knockouts[args.el.bigg_id] = true
           model = knock_out_reaction(model, args.el.bigg_id)
           solve_and_display(model, builder, knockouts)
         }
-      }
+      })
     // Update the text to read out the identifier biggId
     args.el.childNodes[0].textContent = args.state.biggId
     }
