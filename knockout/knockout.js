@@ -44,7 +44,7 @@ function initialize_knockout () {
     load_builder(function(builder) {
         load_model(function(model) {
             var old_model = escher.utils.clone(model);
-            optimize_loop(builder, model);
+            optimize_loop(builder, model, old_model);
             d3.select('#reset-button').on('click', function () {
                     model = escher.utils.clone(old_model)
                     optimize_loop(builder, model)
@@ -84,7 +84,7 @@ function set_knockout_status (text) {
 }
 
 
-function optimize_loop (builder, model) {
+function optimize_loop (builder, model, old_model) {
     builder.options.tooltip_component = function (args) {
       // Check if there is already text in the tooltip
       if (args.el.childNodes.length === 0) {
@@ -102,7 +102,7 @@ function optimize_loop (builder, model) {
         var $slider_input = $('<input class = "slider">').appendTo(args.el)
         var $knockout_button = document.createElement('button')
         var $rxn_reset = document.createElement('button')
-        var ko_btn_text = document.createTextNode('Knockout Gene')
+        var ko_btn_text = document.createTextNode('Knockout Reaction')
         var reset_btn_text = document.createTextNode('Reset Reaction')
         $knockout_button.appendChild(ko_btn_text)
         $rxn_reset.appendChild(reset_btn_text)
@@ -131,8 +131,6 @@ function optimize_loop (builder, model) {
               var upper = model.reactions[i].upper_bound
           }
       }
-      console.log(lower)
-      console.log(upper)
       slider_data.update({
         hide_min_max: true,
         keyboard: true,
@@ -153,18 +151,38 @@ function optimize_loop (builder, model) {
         onFinish: function (data) {
           model = change_flux_reaction (model, args.state.biggId, data.from_value, data.to_value)
           solve_and_display(model, builder, knockouts)
-          console.log(data.from)
-          console.log(data.to)
         },
       })
-      $knockout_button.onclick = function() {
-        if (knockable(args.el.bigg_id)) {
-          if (!(args.el.bigg_id in knockouts))
-            knockouts[args.el.bigg_id] = true
-          model = knock_out_reaction(model, args.el.bigg_id)
+
+      $knockout_button.on('click', function() {
+        if (knockable(args.state.biggId)) {
+          if (!(args.state.biggId in knockouts))
+            knockouts[args.state.biggId] = true
+          model = knock_out_reaction(model, args.state.biggId)
           solve_and_display(model, builder, knockouts)
+          slider_data.update({
+            from: 51,
+            to: 51
+          })
         }
-      }
+      })
+
+      $rxn_reset.on('click', function() {
+        for (var i = 0, l = model.reactions.length; i < l; i++) {
+          if (model.reactions[i].id == args.state.biggId) {
+            if (args.state.biggId in knockouts)
+              delete knockouts[args.state.biggId]
+            model.reactions[i].lower_bound = old_model.reactions[i].lower_bound
+            model.reactions[i].upper_bound = old_model.reactions[i].upper_bound
+            solve_and_display(model, builder, knockouts)
+            console.log(knockouts)
+            slider_data.update({
+              from: old_model.reactions[i].lower_bound + 51,
+              to: old_model.reactions[i].upper_bound + 51
+            })
+          }
+        }
+      })
     // Update the text to read out the identifier biggId
     args.el.childNodes[0].textContent = args.state.biggId
     }
