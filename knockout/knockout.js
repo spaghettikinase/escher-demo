@@ -171,7 +171,8 @@ function optimize_loop (builder, model, old_model) {
         for (var i = 0, l = model.reactions.length; i < l; i++) {
           if (model.reactions[i].id == args.state.biggId) {
             if (args.state.biggId in knockouts)
-              delete knockouts[args.state.biggId]
+              console.log(args.state.biggId)
+              knockouts.splice(knockouts.indexOf(args.state.biggId.toString()), 1)
             model.reactions[i].lower_bound = old_model.reactions[i].lower_bound
             model.reactions[i].upper_bound = old_model.reactions[i].upper_bound
             solve_and_display(model, builder, knockouts)
