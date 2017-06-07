@@ -86,6 +86,10 @@ function set_knockout_status (text) {
 
 function optimize_loop (builder, model, old_model) {
     builder.options.tooltip_component = function (args) {
+      if (args.state.type !== 'reaction') {
+        // Hide Children
+        return
+      }
       // Check if there is already text in the tooltip
       if (args.el.childNodes.length === 0) {
         // If not, add new text
@@ -131,6 +135,7 @@ function optimize_loop (builder, model, old_model) {
               var upper = model.reactions[i].upper_bound
           }
       }
+      console.log(args.state)
       slider_data.update({
         hide_min_max: true,
         keyboard: true,
