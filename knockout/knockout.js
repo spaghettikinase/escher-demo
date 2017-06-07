@@ -102,7 +102,7 @@ function optimize_loop (builder, model, old_model) {
         var $slider_input = $('<input class = "slider">').appendTo(args.el)
         var $knockout_button = document.createElement('button')
         var $rxn_reset = document.createElement('button')
-        var ko_btn_text = document.createTextNode('Knockout Gene')
+        var ko_btn_text = document.createTextNode('Knockout Reaction')
         var reset_btn_text = document.createTextNode('Reset Reaction')
         $knockout_button.appendChild(ko_btn_text)
         $rxn_reset.appendChild(reset_btn_text)
@@ -153,14 +153,38 @@ function optimize_loop (builder, model, old_model) {
           solve_and_display(model, builder, knockouts)
         },
       })
+
       $knockout_button.on('click', function() {
-        if (knockable(args.el.bigg_id)) {
-          if (!(args.el.bigg_id in knockouts))
-            knockouts[args.el.bigg_id] = true
-          model = knock_out_reaction(model, args.el.bigg_id)
+        if (knockable(args.state.biggId)) {
+          if (!(args.state.biggId in knockouts))
+            knockouts[args.state.biggId] = true
+          model = knock_out_reaction(model, args.state.biggId)
           solve_and_display(model, builder, knockouts)
+          slider_data.update({
+            from: 51,
+            to: 51
+          })
         }
       })
+
+      $rxn_reset.on('click', function() {
+        for (var i = 0, l = model.reactions.length; i < l; i++) {
+          if (model.reactions[i].id == args.state.biggId) {
+            if (args.state.biggId in knockouts)
+              console.log(args.state.biggId)
+              knockouts.splice(knockouts.indexOf(args.state.biggId.toString()), 1)
+            model.reactions[i].lower_bound = old_model.reactions[i].lower_bound
+            model.reactions[i].upper_bound = old_model.reactions[i].upper_bound
+            solve_and_display(model, builder, knockouts)
+            console.log(knockouts)
+            slider_data.update({
+              from: old_model.reactions[i].lower_bound + 51,
+              to: old_model.reactions[i].upper_bound + 51
+            })
+          }
+        }
+      })
+      
     // Update the text to read out the identifier biggId
     args.el.childNodes[0].textContent = args.state.biggId
     }
